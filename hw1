@@ -1,0 +1,89 @@
+# Author: Colin White
+# Date: January 27, 2021
+# Class: Mech. Engineering 575: Optimization
+
+# I wrote this program to find the Brachistochrone curve.
+# It takes n for input (number of points along x-axis)
+# The program returns the y-values of the Brachistochrone function
+# The Brachistochrone curve is the curve of fastest descent
+# from point A to point B of a falling object
+
+
+# Textbook intro to the Brachistochrone Problem
+# "This is the classic problem proposed by Johann Bernoulli.
+# Although this was originally solved analytically,
+# we discretize the model and solve the problem using
+# numerical optimization. This is a useful problem for benchmarking
+# because you can change the number of dimensions.
+
+import numpy as np
+from scipy.optimize import minimize
+import matplotlib.pyplot as plt
+
+#Set variable
+n = 130
+A = [0,1]
+B = [1,0]
+x = np.zeros((n))
+F = 0.0
+
+#Make array of evenly spaced x values
+for j in range(1, n-1):
+    x[j] = (B[0]-A[0])/(n-1) + x[j-1]
+x[0] = 0
+x[n-1] = 1
+
+#Make and array of evenly spaced y guesses between 1 and 0, also gives good guesses so it does not break optimmizer
+s0 = np.linspace(1., 0., n)[1:n-1]
+
+# 1 Brachistochrone funciton
+def Br(y):
+    F = 0.0
+    u = 0.3
+
+    #Takes array of y-value-guesses and adds 1 to the front and 0 to the end
+    # Make an array with 1 as the only element
+    a = [1]
+    # The ".extent()" takes the input array (a) and adds the other array (y) to the end of a.
+    a.extend(y)
+    b = [0]
+    a.extend(b)
+    # make array y equal array a
+    y = a
+
+    #make hieght equal 1, aka first y array element
+    H = y[0]
+
+    #Brachistochrone equation
+    for i in range(0, n - 1):
+        dx = x[i + 1] - x[i]
+        dy = y[i + 1] - y[i]
+        #Keeps running total of F. Takes current value of F and adds the equation to it, and updates value of F
+        F += np.sqrt((dx ** 2) + (dy ** 2)) / (np.sqrt(H - y[i + 1] - u * x[i + 1]) + np.sqrt(H - y[i] - u * x[i]))
+
+    # Br function return F, which is a sum total of F after all interations through the for loop with i
+    return F
+
+#The optimization function calls Br and passes in the array s0
+res = minimize(Br, s0)
+
+#This takes the optimized intermediat y values and adds 1 to the front and 0 to the end of the array
+c = [1]
+c.extend(res.x) # The ".extent()" takes the input array (c) and adds the other array (res.x) to the end.
+d = [0]
+c.extend(d) #adds a zero to the end of the array c
+
+#Takes Brachistochrone equation and converts to time in seconds
+t = res.fun * np.sqrt(2/9.81)
+print("x values = ",x)
+print("Otimized y values =",c)
+print("optimization function F =", res.fun)
+print("time for bead to travel=",t)
+print("success? = ",res.success)
+print(res)
+
+#Plot the results
+plt.plot(x,c)
+plt.show()
+
+
